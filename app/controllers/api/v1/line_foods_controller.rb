@@ -2,7 +2,7 @@
 module Api
   module V1
     class LineFoodsController < ApplicationController
-      before_action :set_food, only: %i[create] #before_actionではそのコントローラーのメインアクションに入る"前"に行う処理を挟める -> callback
+      before_action :set_food, only: %i[create replace] #before_actionではそのコントローラーのメインアクションに入る"前"に行う処理を挟める -> callback
 
       def index
         line_foods = LineFood.active # 全てのLineFoodモデルの中から、activeなものを取得し、line_foodsという変数に代入
@@ -27,6 +27,22 @@ module Api
             existing_restaurant: LineFood.other_restaurant(@ordered_food.restaurant.id).first.restaurant.name,
             new_restaurant: Food.find(params[:food_id]).restaurant.name,
           }, status: :not_acceptable
+        end
+
+        set_line_food(@ordered_food)
+
+        if @line_food.save
+          render json: {
+            line_food: @line_food
+          }, status: :created
+          else
+            render json: {}, status: :internal_server_error
+          end
+        end
+
+       def replace
+        LineFood.active.other_restaurant(@ordered_food.restaurant.id).each do |line_food| #each ~ doについて下記
+        line_food.update_attribute(:active, false)
         end
 
         set_line_food(@ordered_food) # line_foodインスタンス生成
@@ -95,3 +111,11 @@ end
 ## まとめ
 # スコープはActiveRecord_Relationを返す
 # exists?でデータがあるかどうかをtrue/falseで判断できる -> 他に nil?/empty?/present?がある
+
+## replace
+# before_actionで@ordered_foodをセット
+
+# 他店舗のactiveなLineFood一覧をLineFood.active.other_restaurant(@ordered_food.restaurant.id)で取得し、そのままeachに渡す。各要素に対し、do...end内の処理を実行 -> 他店舗のLineFood一つずつに対してupdate_attributeで更新している。更新内容は引数に渡された(:active, false)で、line_food.activeをfalseにするという意味
+
+## mapとeachのちがい
+# map: 最終的に配列をreturn, each: ただ繰り返し処理を行うだけで、そのままでは配列は返さない
