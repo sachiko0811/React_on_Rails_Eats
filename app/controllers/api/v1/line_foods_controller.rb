@@ -4,6 +4,23 @@ module Api
     class LineFoodsController < ApplicationController
       before_action :set_food, only: %i[create] #before_actionではそのコントローラーのメインアクションに入る"前"に行う処理を挟める -> callback
 
+      def index
+        line_foods = LineFood.active # 全てのLineFoodモデルの中から、activeなものを取得し、line_foodsという変数に代入
+        if line_foods.exists?
+          render json: {
+            line_food_ids: line_foods.map{ |line_food| line_food.id }, # 登録されているLineFoodのidを配列形式にしている, インスタンスであるline_foodsそれぞれをline_foodという単数形の変数名でとって、line_food.idとして１つずつのidを取得, それが最終的にline_food_ids: ...のプロパティとなる
+            restaurant: line_foods[0].restaurant,
+            # １つの仮注文につき１つの店舗という仕様のため、line_foodsの中にある先頭のline_foodインスタンスの店舗の情報を詰めている
+            count: line_foods.sum { |line_food| line_food[:count] },
+            # 各line_foodインスタンスには数量を表す:countがある
+            amount: line_foods.sum { |line_food| line_food.total_amount },
+            # amountには各line_foodがインスタンスメソッドtotal_amountを呼んで、その数値を合算, 「数量×単価」のさらに合計を計算(フロントエンドで必要)
+          }, status: :ok
+          else # activeなLineFoodが一つも存在しないcase
+            render json: {}, status: :no_content # 空データとstatus: :no_contentを返す
+          end
+        end
+
       def create
         if LineFood.active.other_restaurant(@ordered_food.restaurant.id).exists?
           return render json: {
@@ -66,3 +83,15 @@ end
 # JSONの中身にはexisting_restaurantで既に作成されている他店舗の情報と、new_restaurantでこのリクエストで作成しようとした新店舗の情報の２つをreturn, and return "406 Not Acceptable"HTTPレスポンスステータスコード
 
 # 「早期リターン」とは複雑あるいは重いメイン処理を実行する前に、この処理が不要なケースに当てはまるかどうかをifなどでチェックし、その場合にメイン処理に入らせないことを指す
+
+# active? -> models/line_food.rbのscope :active, モデル名.スコープ名 === active: trueなLineFoodの一覧がActiveRecord_Relationのかたちで取得可能
+
+# .exists?メソッドは対象のインスタンスのデータがDBに存在するかどうか？をtrue/falseで返すメソッド
+
+# .map method -> 配列やハッシュオブジェクトなどを１つずつ取り出し、.mapより後ろのブロックをあてていく
+
+# 保守性の観点でなるべくデータの計算などはサーバーサイドで担当すべき, ビジネスロジックとしてモデル層ではなく、コントローラー層にベタ書きする
+
+## まとめ
+# スコープはActiveRecord_Relationを返す
+# exists?でデータがあるかどうかをtrue/falseで判断できる -> 他に nil?/empty?/present?がある
