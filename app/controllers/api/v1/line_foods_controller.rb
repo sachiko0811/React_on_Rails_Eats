@@ -52,3 +52,15 @@ end
 # アクションの実行前にフィルタとして before_action : フィルタアクション名 を定義できる -> 今回の例だとcreateの実行前に、set_foodを実行することができる, :onlyオプションをつけることで、特定のアクションの実行前にだけ追加できる
 
 # set_foodはこのコントローラーの中でしか呼ばれないaction, そのためprivateにする
+
+# set_foodの中ではparams[:food_id]を受け取って、対応するFoodを１つ抽出し、@ordered_foodというインスタンス変数に代入 -> このあと実行されるcreateアクションの中でも@ordered_foodを参照可能
+
+# !!注意　-> インスタンス変数(どこからでも参照できる)は便利だけどグローバルに定義するときのみ使うべき
+
+# ローカル変数(@をつけない変数)の場合、そのスコープでしか使われないため心配がない
+
+
+## 例外パターン(他店舗での仮注文が既にある場合) ##
+# LineFood.active.other_restaurant(@ordered_food.restaurant.id)は複数のscope(active, other_resrtaurant)を組み合わせて「他店舗でアクティブなLineFood」をActiveRecord_Relationのかたちで取得　-> それが存在するかどうかをexists?で判断　-> if it's true, then return JSONデータ
+
+# JSONの中身にはexisting_restaurantで既に作成されている他店舗の情報と、new_restaurantでこのリクエストで作成しようとした新店舗の情報の２つをreturn, and return "406 Not Acceptable"HTTPレスポンスステータスコード
