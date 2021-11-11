@@ -42,7 +42,7 @@ module Api
 
        def replace
         LineFood.active.other_restaurant(@ordered_food.restaurant.id).each do |line_food| #each ~ doについて下記
-        line_food.update_attribute(:active, false)
+        line_food.update_attribute(:active, false) #line_food.activeをfalseにする
         end
 
         set_line_food(@ordered_food) # line_foodインスタンス生成
@@ -119,3 +119,8 @@ end
 
 ## mapとeachのちがい
 # map: 最終的に配列をreturn, each: ただ繰り返し処理を行うだけで、そのままでは配列は返さない
+
+#範囲obj.eachの形で、範囲objの中身一つ一つを参照することができる。
+
+## まとめ
+# before_actionなどのcallbackには特定のアクションの場合のみ実行する、という指定ができる。 -> only: %i[メソッド名]
