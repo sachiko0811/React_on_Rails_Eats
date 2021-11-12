@@ -1,10 +1,9 @@
-import logo from './logo.svg';
+import React from 'react';
 import './App.css';
 import { 
-  BrowserRouter as Router,
-  Switch,
-  Route
+  BrowserRouter as Routes, Switch, Route, BrowserRouter,
 } from 'react-router-dom';
+// import { Switch } from 'react-router';
 
 // components
 import { Restaurants } from './containers/Restaurants.jsx';
@@ -13,11 +12,12 @@ import { Orders } from './containers/Orders.jsx';
 
 function App() {
   return (
-    <Router>
+    <BrowserRouter>
+    <Routes>
       <Switch>
         {/* // 店舗一覧ページ */}
         <Route
-          exacts
+          exact
           path="/restaurants" //path="設定したいPATH"
         >
           <Restaurants />
@@ -36,8 +36,18 @@ function App() {
         >
           <Orders />
         </Route>
+        <Route
+          exact
+          path="/restaurants/:restaurantsId/foods"
+          render={({ match }) => 
+          <Foods 
+            match={match}
+          />
+        }
+        />
       </Switch>
-    </Router>
+    </Routes>
+    </BrowserRouter>
   );
 }
 
